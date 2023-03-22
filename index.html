@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Order Input</title>
+    <style>
+        input[type=number] {
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>New Order Input</h1>
+    <form id="orderForm">
+        <h2>Order Header</h2>
+        <label for="w_id">Warehouse number (W_ID): </label><input type="number" id="w_id" name="w_id"><br><br>
+        <label for="d_id">District number (D_ID): </label><input type="number" id="d_id" name="d_id"><br><br>
+        <label for="c_id">Customer number (C_ID): </label><input type="number" id="c_id" name="c_id"><br><br>
+
+        <h2>Order Items</h2>
+
+        <!-- Container for order items -->
+        <div id="orderItemsContainer"></div>
+
+        <!-- Button to add more items -->
+        <button type="button" onclick="addOrderItem()">Add Item</button><br><br>
+
+        <!-- Submit button -->
+        <input type="submit" value="Submit">
+    </form>
+
+    <!-- Template for order item -->
+    <template id="orderItemTemplate">
+        <div class="orderItem">
+            <label for="ol_i_id">Item number (OL_I_ID): </label><input type="number" class="ol_i_id" name="ol_i_id"><br>
+            <label for="ol_supply_w_id">Supplying warehouse number (OL_SUPPLY_W_ID): </label><input type="number" class="ol_supply_w_id" name="ol_supply_w_id"><br>
+            <label for="ol_quantity">Quantity (OL_QUANTITY): </label><input type="number" class="ol_quantity" name="ol_quantity"><br>
+            <button type="button" onclick="removeOrderItem(this)">Remove</button><br><br>
+        </div>
+    </template>
+
+    <script>
+        // Function to add a new order item
+        function addOrderItem() {
+            // Get the order item template and container
+            var template = document.querySelector('#orderItemTemplate');
+            var container = document.querySelector('#orderItemsContainer');
+
+            // Clone the template and append it to the container
+            var clone = document.importNode(template.content, true);
+            container.appendChild(clone);
+        }
+
+        // Function to remove an order item
+        function removeOrderItem(button) {
+            // Get the parent element of the button (the order item) and remove it
+            var orderItem = button.parentElement;
+            orderItem.remove();
+        }
+
+        // Add event listener to form submission
+    document.querySelector('#orderForm').addEventListener('submit', function(event) {
+        // Prevent default form submission behavior
+        event.preventDefault();
+
+        // Get the form data
+        var formData = new FormData(event.target);
+
+        // Create an object to hold the order data
+        var orderData = {
+            w_id: formData.get('w_id'),
+            d_id: formData.get('d_id'),
+            c_id: formData.get('c_id'),
+            items: []
+        };
+
+        // Get all the order items and add them to the order data
+        var orderItems = document.querySelectorAll('.orderItem');
+        for (var i = 0; i < orderItems.length; i++) {
+            var itemData = {
+                ol_i_id: orderItems[i].querySelector('.ol_i_id').value,
+                ol_supply_w_id: orderItems[i].querySelector('.ol_supply_w_id').value,
+                ol_quantity: orderItems[i].querySelector('.ol_quantity').value,
+            };
+            orderData.items.push(itemData);
+        }
+
+        // Send the data to your backend service for processing
+    var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/processOrder');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                // Redirect to the New Order Result page with the response data
+                var responseData = JSON.parse(xhr.responseText);
+                window.location.href = '/newOrderResult?data=' + encodeURIComponent(JSON.stringify(responseData));
+            }
+        };
+        
+        xhr.send(JSON.stringify(orderData));
+    });
+    </script>
+</body>
+</html>
